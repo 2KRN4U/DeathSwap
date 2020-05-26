@@ -1,0 +1,7 @@
+main: com.tsukrn.DeathSwap.Main
+name: DeathSwap
+version: 1.0
+author: 2KRN
+
+commands:
+ DeathSwap:

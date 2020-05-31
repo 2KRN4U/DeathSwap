@@ -4,10 +4,13 @@ package com.tsukrn.DeathSwap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -30,21 +33,28 @@ public class Main extends JavaPlugin {
     int i = 0; //keep track of time
     int newLength = 0;
     String[] playerArgs = new String[0];
-
+    Boolean gameOver = false;
+    
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (label.equalsIgnoreCase("deathswap")) {
             if (args.length > 2) {
+                int time = Integer.parseInt(args[(args.length - 1)]);
                 String[] arguments = new String[(args.length - 1)];
                 playerArgs = arguments.clone();
-                Player[] water = new Player[(args.length - 1)];
                 Player[] amtOfPlayers = new Player[(args.length - 1)];
                 Location[] playerLocations = new Location[(args.length - 1)];
                 for (int x = 0; x < (args.length - 1); x++) {
                     playerArgs[x] = args[x];
-                    water[x] = Bukkit.getPlayer(playerArgs[x]);
-                    water[x].getInventory().clear();
-                    water[x].getInventory().addItem(new ItemStack(Material.WATER_BUCKET));
-
+                    amtOfPlayers[x] = Bukkit.getPlayer(playerArgs[x]);
+                    amtOfPlayers[x].getInventory().clear();
+                    amtOfPlayers[x].getInventory().addItem(new ItemStack(Material.WATER_BUCKET));
+                    amtOfPlayers[x].setGameMode(GameMode.SURVIVAL);
+                    amtOfPlayers[x].setHealth(20.0);
+                    amtOfPlayers[x].setFoodLevel(20);
+                    /*amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, (999999), 1)); //uncomment these effects if you want to have everyone survive the first round
+                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, (time*20+600), 9));
+                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, (time*20+600), 9));
+                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, (9999999), 20));*/
                 }
                 for (World w: Bukkit.getWorlds()) {
                     w.setTime(0);
@@ -52,10 +62,8 @@ public class Main extends JavaPlugin {
                 }
 
 
-
                 Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "***DeathSwap***\nCreated by: \u30C4KRN");
-                int time = Integer.parseInt(args[(args.length - 1)]);
-                Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+                final int task = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
                     @Override
                     public void run() {
                         if (i == 1)
@@ -85,12 +93,14 @@ public class Main extends JavaPlugin {
                             playerAlive[a] = Bukkit.getPlayer(playerArgs[a]);
                             if (playerAlive[a].isDead()) {
                                 String deadPlayer = playerAlive[a].getName();
+                                playerAlive[a].setGameMode(GameMode.SPECTATOR);
                                 newLength = playerArgs.length;
                                 for (int b = 0; b < playerArgs.length; b++) {
                                     if (playerArgs[b].contains(deadPlayer)) { // shoutout to the peeps at stackoverflow https://stackoverflow.com/questions/47068605/java-remove-an-item-from-existing-string-array
                                         newLength--;
-
+                                        
                                     }
+                                    
                                 }
                                 String[] results = new String[newLength];
                                 int count = 0;
@@ -101,12 +111,26 @@ public class Main extends JavaPlugin {
                                     }
                                 }
                                 playerArgs = results.clone();
+                                if (playerArgs.length == 1) {
+                                	Player winner = Bukkit.getPlayer(playerArgs[0]);
+                                	Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Winner: " + ChatColor.GOLD + ChatColor.BOLD + winner.getName()); 
+                                	gameOver = true;
+                                }
                             }
                         }
                         i++;
                     }
                 }, 0, 20);
-
+                Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+                    @Override
+                    public void run() {
+                    	if (gameOver) {
+                    		Bukkit.getScheduler().cancelTask(task);
+                    		i = 0;
+                    		gameOver = false;
+                    	}
+                    }
+                }, 0, 20);
 
             }
 

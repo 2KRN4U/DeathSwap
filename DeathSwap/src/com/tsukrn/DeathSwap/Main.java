@@ -13,6 +13,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 
@@ -34,9 +35,74 @@ public class Main extends JavaPlugin {
     int newLength = 0;
     String[] playerArgs = new String[0];
     Boolean gameOver = false;
+    Boolean fireResist = false;
+    Boolean haste = false;
+    Boolean resist = false;
+    Boolean hunger = false;
     
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (label.equalsIgnoreCase("deathswap")) {
+        if (label.equalsIgnoreCase("deatheffect")) {
+        	if (args.length > 1) {
+        		if (args[0].toLowerCase().equals("fireresist")) {
+        			if (args[1].toLowerCase().equals("true")) {
+        				fireResist = true;
+        				Bukkit.broadcastMessage("Fire Reistance on");
+        			}
+        			if (args[1].toLowerCase().equals("false")) {
+        				fireResist = false;
+        				Bukkit.broadcastMessage("Fire Resistance off");
+        			}
+        		} else if (args[0].toLowerCase().equals("haste")) {
+        			if (args[1].toLowerCase().equals("true")) {
+        				haste = true;
+        				Bukkit.broadcastMessage("Haste on");
+        			}
+        			if (args[1].toLowerCase().equals("false")) {
+        				haste = false;
+        				Bukkit.broadcastMessage("Haste off");
+        			}
+        		} else if (args[0].toLowerCase().equals("resist")) {
+        			if (args[1].toLowerCase().equals("true")) {
+        				resist = true;
+        				Bukkit.broadcastMessage("Resistance on");
+        			}
+        			if (args[1].toLowerCase().equals("false")) {
+        				resist = false;
+        				Bukkit.broadcastMessage("Resistance off");
+        			}
+        		} else if (args[0].toLowerCase().equals("hunger")) {
+        			if (args[1].equals("true")) {
+        				hunger = true;
+        				Bukkit.broadcastMessage("Saturation on");
+        			}
+        			if (args[1].equals("false")) {
+        				hunger = false;
+        				Bukkit.broadcastMessage("Saturation off");
+        			}
+        		} else if (args[0].toLowerCase().equals("all")) {
+        			if (args[1].toLowerCase().equals("true")) {
+        				fireResist = true;
+        				haste = true;
+        				resist = true;
+        				hunger = true;
+        				Bukkit.broadcastMessage("All effects on");
+        			}
+        			if (args[1].toLowerCase().equals("false")) {
+        				fireResist = false;
+        				haste = false;
+        				resist = false;
+        				hunger = false;
+        				Bukkit.broadcastMessage("All effects off");
+        			}
+        		} else {
+            		Bukkit.broadcastMessage("Usage: /deatheffect [effect] [true/false]\nEffects: fireResist (inf)\nhaste (first round + 30 seconds)\nresist (Resistance - first round + 30 seconds)\nhunger (Saturation - inf)\nall (enables all effects)");
+            	}
+        	} else {
+        		Bukkit.broadcastMessage("Usage: /deatheffect [effect] [true/false]\nEffects: fireResist (inf)\nhaste (first round + 30 seconds)\nresist (Resistance - first round + 30 seconds)\nhunger (Saturation - inf)\nall (enables all effects)");
+        	}
+        }
+    	
+    	if (label.equalsIgnoreCase("deathswap")) {
             if (args.length > 2) {
                 int time = Integer.parseInt(args[(args.length - 1)]);
                 String[] arguments = new String[(args.length - 1)];
@@ -51,10 +117,19 @@ public class Main extends JavaPlugin {
                     amtOfPlayers[x].setGameMode(GameMode.SURVIVAL);
                     amtOfPlayers[x].setHealth(20.0);
                     amtOfPlayers[x].setFoodLevel(20);
-                    /*amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, (999999), 1)); //uncomment these effects if you want to have everyone survive the first round
-                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, (time*20+600), 9));
-                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, (time*20+600), 9));
-                    amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, (9999999), 20));*/
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke " + amtOfPlayers[x].getName() + " everything");
+                    if (fireResist) {
+                    	amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, (999999), 1)); //uncomment these effects if you want to have everyone survive the first round
+                    }
+                    if (haste) {
+                    	amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, (time*20+600), 9));
+                    }
+                    if (resist) {
+                    	amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, (time*20+600), 9));
+                    }
+                    if (hunger) {
+                    	amtOfPlayers[x].addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, (9999999), 20));
+                    }
                 }
                 for (World w: Bukkit.getWorlds()) {
                     w.setTime(0);
@@ -68,8 +143,12 @@ public class Main extends JavaPlugin {
                     public void run() {
                         if (i == 1)
                             Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "Teleporting in " + time + " secs");
-                        if (i > (time - 10) && i < time) {
+                        if (i > (time - 11) && i < time) {
                             Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "Teleporting in " + (time - i));
+                            for (int y = 0; y < playerArgs.length; y++) {
+                            	amtOfPlayers[y] = Bukkit.getPlayer(playerArgs[y]);
+                            	amtOfPlayers[y].playSound(amtOfPlayers[y].getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.2f, 1);
+                            }
                         }
                         if (i == time) {
 
@@ -82,8 +161,10 @@ public class Main extends JavaPlugin {
                                 playerLocations[x] = amtOfPlayers[x].getLocation();
                                 if (x == playerArgs.length - 1) {
                                     amtOfPlayers[x].teleport(playerLocations[0]);
+                                    amtOfPlayers[x].playSound(amtOfPlayers[x].getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1, 1);
                                 } else {
                                     amtOfPlayers[x].teleport(playerLocations[(x + 1)]);
+                                    amtOfPlayers[x].playSound(amtOfPlayers[x].getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1, 1);
                                 }
                             }
                             i = 0;
@@ -132,7 +213,9 @@ public class Main extends JavaPlugin {
                     }
                 }, 0, 20);
 
-            }
+            } else {
+        		Bukkit.broadcastMessage("Usage: /deathswap [player1] [player2] [player3...] [time] (add as many players, use /deatheffect for effects)");
+        	}
 
 
         }
